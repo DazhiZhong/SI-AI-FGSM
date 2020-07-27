@@ -22,40 +22,7 @@ from nets import inception_v3, inception_v4, inception_resnet_v2, resnet_v2
 
 import random
 
-slim = tf.contrib.slim
-
-tf.flags.DEFINE_integer('batch_size', 10, 'How many images process at one time.')
-
-tf.flags.DEFINE_float('max_epsilon', 16.0, 'max epsilon.')
-
-tf.flags.DEFINE_integer('num_iter', 10, 'max iteration.')
-
-# tf.flags.DEFINE_float('momentum', 1.0, 'momentum about the model.')
-
-tf.flags.DEFINE_float('beta_1',0.9,'decay factor of the accumulated squares of gradients?')
-
-tf.flags.DEFINE_float('beta_2',0.999,'decay factor of the accumulated squares of gradients?')
-
-tf.flags.DEFINE_integer(
-    'image_width', 299, 'Width of each input images.')
-
-tf.flags.DEFINE_integer(
-    'image_height', 299, 'Height of each input images.')
-
-tf.flags.DEFINE_float('prob', 0.5, 'probability of using diverse inputs.')
-
-tf.flags.DEFINE_integer('image_resize', 331, 'Height of each input images.')
-
-tf.flags.DEFINE_string('checkpoint_path', './models',
-                       'Path to checkpoint for pretained models.')
-
-tf.flags.DEFINE_string('input_dir', './dev_data/val_rs',
-                       'Input directory with images.')
-
-tf.flags.DEFINE_string('output_dir', './outputs',
-                       'Output directory with images.')
-
-FLAGS = tf.flags.FLAGS
+from fgsmutils import *
 
 np.random.seed(0)
 tf.set_random_seed(0)
@@ -85,36 +52,6 @@ kernel = gkern(7, 3).astype(np.float32)
 stack_kernel = np.stack([kernel, kernel, kernel]).swapaxes(2, 0)
 stack_kernel = np.expand_dims(stack_kernel, 3)
 
-
-def load_images(input_dir, batch_shape):
-    """Read png images from input directory in batches.
-    Args:
-      input_dir: input directory
-      batch_shape: shape of minibatch array, i.e. [batch_size, height, width, 3]
-    Yields:
-      filenames: list file names without path of each image
-        Lenght of this list could be less than batch_size, in this case only
-        first few images of the result are elements of the minibatch.
-      images: array with all images from this batch
-    """
-    images = np.zeros(batch_shape)
-    filenames = []
-    idx = 0
-    batch_size = batch_shape[0]
-    for filepath in tf.gfile.Glob(os.path.join(input_dir, '*')):
-        with tf.gfile.Open(filepath, 'rb') as f:
-            image = imread(f, mode='RGB').astype(np.float) / 255.0
-        # Images for inception classifier are normalized to be in [-1, 1] interval.
-        images[idx, :, :, :] = image * 2.0 - 1.0
-        filenames.append(os.path.basename(filepath))
-        idx += 1
-        if idx == batch_size:
-            yield filenames, images
-            filenames = []
-            images = np.zeros(batch_shape)
-            idx = 0
-    if idx > 0:
-        yield filenames, images
 
 
 def save_images(images, filenames, output_dir):

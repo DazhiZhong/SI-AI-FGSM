@@ -66,17 +66,16 @@ def graph(x, y, i, x_max, x_min, grad):
         logits_v3, end_points_v3 = inception_v3.inception_v3(
             x, num_classes=num_classes, is_training=False, reuse=tf.AUTO_REUSE)
 
+
+    # this assumes the correctness of the original output
     pred = tf.argmax(end_points_v3['Predictions'], 1)
-
-    first_round = tf.cast(tf.equal(i, 0), tf.int64)
-    y = first_round * pred + (1 - first_round) * y
-    one_hot = tf.one_hot(y, num_classes)
-
+    first_round = tf.cast(tf.equal(i, 0), tf.int64) # 1 if 1st round 0 if not
+    y = first_round * pred + (1 - first_round) * y # if first  round y=prediction else y = y (this helps label leaking )
+    
+    #self explanatory
+    one_hot = tf.one_hot(y, num_classes) 
     cross_entropy = tf.losses.softmax_cross_entropy(one_hot, logits_v3)
-
-
-    # noise == gradients
-    noise = tf.gradients(cross_entropy, x)[0]
+    noise = tf.gradients(cross_entropy, x)[0] # noise == gradients for input
 
     # xxx algorithm
     noise = noise / tf.reduce_mean(tf.abs(noise), [1, 2, 3], keep_dims=True)

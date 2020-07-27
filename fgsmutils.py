@@ -40,7 +40,7 @@ tf.flags.DEFINE_integer(
 
 tf.flags.DEFINE_float('prob', 0.5, 'probability of using diverse inputs.')
 
-tf.flags.DEFINE_integer('image_resize', 331, 'Height of each input images.')
+tf.flags.DEFINE_integer('image_resize', 331, 'Height of each input images.') # ???? is copy pasted and forgot to change and stuff
 
 tf.flags.DEFINE_string('checkpoint_path', './models',
                        'Path to checkpoint for pretained models.')
